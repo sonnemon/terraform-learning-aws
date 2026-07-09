@@ -15,6 +15,10 @@ secrets.tfvars
 node_modules/
 dist/
 
+# Credentials — never commit
+.env
+.env.*
+
 # Editor / OS
 .vscode/
 .idea/
