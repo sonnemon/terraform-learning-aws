@@ -1,0 +1,21 @@
+# Terraform — the state stores EVERYTHING in plain text, never commit it
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl.backup
+crash.log
+override.tf
+override.tf.json
+
+# Sensitive variable files (commit only non-sensitive examples like dev.tfvars.example)
+*.auto.tfvars
+secrets.tfvars
+
+# Node
+node_modules/
+dist/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
