@@ -24,6 +24,52 @@ resource "aws_s3_bucket" "carlos_static_site" {
   bucket = "carlos-static-site-${data.aws_caller_identity.current.account_id}"
 }
 
+resource "aws_s3_bucket_website_configuration" "carlos_static_site" {
+  bucket = aws_s3_bucket.carlos_static_site.id
+
+  index_document {
+    suffix = "index.html"
+  }
+
+  # SPA trick: send 404s back to index.html so client-side routing survives
+  # a page refresh
+  error_document {
+    key = "index.html"
+  }
+}
+
+# Buckets are born fully locked. These four switches must come down before
+# AWS accepts a public bucket policy.
+resource "aws_s3_bucket_public_access_block" "carlos_static_site" {
+  bucket = aws_s3_bucket.carlos_static_site.id
+
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+
+# Public read: anyone (*) can GetObject — objects only, never the bucket
+data "aws_iam_policy_document" "public_read" {
+  statement {
+    actions   = ["s3:GetObject"]
+    resources = ["${aws_s3_bucket.carlos_static_site.arn}/*"]
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "public_read" {
+  bucket = aws_s3_bucket.carlos_static_site.id
+  policy = data.aws_iam_policy_document.public_read.json
+
+  # Without this, apply can race the public access block and get rejected
+  depends_on = [aws_s3_bucket_public_access_block.carlos_static_site]
+}
+
 # --------------------------------------------------------------------------
 # GitHub Actions OIDC — lets the deploy workflow get temporary AWS
 # credentials without any stored secrets. One provider per AWS account

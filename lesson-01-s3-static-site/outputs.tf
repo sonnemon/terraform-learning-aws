@@ -1,3 +1,8 @@
+output "site_url" {
+  description = "Public URL of the static site"
+  value       = "http://${aws_s3_bucket_website_configuration.carlos_static_site.website_endpoint}"
+}
+
 output "bucket_name" {
   description = "Site bucket name — goes into the LESSON_01_BUCKET GitHub variable"
   value       = aws_s3_bucket.carlos_static_site.id

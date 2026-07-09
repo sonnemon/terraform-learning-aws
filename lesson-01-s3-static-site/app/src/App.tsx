@@ -12,6 +12,9 @@ function App() {
         Actions via OIDC — no AWS secrets anywhere.
       </p>
       <p className="footer">terraform-learning-aws · lesson 01</p>
+      <button onClick={() => {
+        alert("Hello, World!")
+      }}>Get File</button>
     </main>
   )
 }
