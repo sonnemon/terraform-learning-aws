@@ -34,3 +34,16 @@ module "users" {
   api_id            = aws_apigatewayv2_api.main.id
   api_execution_arn = aws_apigatewayv2_api.main.execution_arn
 }
+
+module "roles" {
+  source = "./modules/endpoint"
+
+  name       = "lesson-03-roles"
+  source_dir = "${path.module}/app/dist"
+  route_key  = "GET /roles"
+  handler    = "roles.handler"
+
+  # The shared api from main.tf
+  api_id            = aws_apigatewayv2_api.main.id
+  api_execution_arn = aws_apigatewayv2_api.main.execution_arn
+}

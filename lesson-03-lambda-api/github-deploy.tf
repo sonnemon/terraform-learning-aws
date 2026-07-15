@@ -91,6 +91,10 @@ data "aws_iam_policy_document" "github_deploy" {
       "lambda:DeleteFunction",
       "lambda:GetFunction",
       "lambda:GetFunctionConfiguration",
+      # extra reads the provider does when refreshing a function
+      "lambda:GetFunctionCodeSigningConfig",
+      "lambda:GetFunctionConcurrency",
+      "lambda:GetRuntimeManagementConfig",
       "lambda:ListVersionsByFunction",
       "lambda:UpdateFunctionCode",
       "lambda:UpdateFunctionConfiguration",
