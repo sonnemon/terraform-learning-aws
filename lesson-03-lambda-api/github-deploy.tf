@@ -105,6 +105,7 @@ data "aws_iam_policy_document" "github_deploy" {
       "lambda:AddPermission",
       "lambda:RemovePermission",
       "lambda:GetPolicy",
+      "lambda:GetFunctionCodeSigningConfig",
     ]
     resources = ["arn:aws:lambda:us-east-1:${local.account_id}:function:lesson-03-*"]
   }
