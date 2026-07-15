@@ -1,0 +1,73 @@
+name: deploy-lesson-03
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "lesson-03-lambda-api/**"
+  workflow_dispatch: # manual run button
+
+permissions:
+  id-token: write # required to request the OIDC token
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Terraform steps run from the lesson root; the app build steps override
+    # this to point at app/ (see their own working-directory below).
+    defaults:
+      run:
+        working-directory: lesson-03-lambda-api
+
+    steps:
+      # Actions pinned to commit SHAs (tags can be moved, SHAs can't)
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      # ----- Build the app FIRST -----
+      # archive_file zips app/dist at plan time, so the compiled JS must exist
+      # BEFORE Terraform runs. tsc turns src/*.ts into dist/*.js (one file per
+      # handler: index.js, users.js).
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 22 # match the Lambda runtime (nodejs22.x)
+          cache: npm
+          cache-dependency-path: lesson-03-lambda-api/app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: lesson-03-lambda-api/app
+        run: npm ci
+
+      - name: Build (tsc → dist)
+        working-directory: lesson-03-lambda-api/app
+        run: npm run build
+
+      # ----- Authenticate to AWS (no stored keys, OIDC) -----
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@517a711dbcd0e402f90c77e7e2f81e849156e31d # v6.2.2
+        with:
+          role-to-assume: ${{ vars.LESSON_03_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+
+      # ----- CI: validate the config -----
+      - name: Terraform Init
+        run: terraform init -input=false
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan -input=false
+
+      # ----- CD: apply for real (only on main) -----
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve -input=false

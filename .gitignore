@@ -15,6 +15,9 @@ secrets.tfvars
 node_modules/
 dist/
 
+# Lambda zips — rebuilt from source on every plan, no reason to commit them
+build/
+
 # Credentials — never commit
 .env
 .env.*
