@@ -12,6 +12,6 @@ export const handler = async (
   return {
     statusCode: 200,
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ message: "hello from lambda" }),
+    body: JSON.stringify({ message: "hello from lambda", data: { id: 1, name: "John Doe" } }),
   };
 };

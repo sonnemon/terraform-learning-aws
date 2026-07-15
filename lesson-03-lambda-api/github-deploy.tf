@@ -140,7 +140,13 @@ data "aws_iam_policy_document" "github_deploy" {
       "logs:UntagResource",
       "logs:ListTagsForResource",
     ]
-    resources = ["arn:aws:logs:us-east-1:${local.account_id}:log-group:/aws/lambda/lesson-03-*:*"]
+    # Two ARN forms: with ":*" for stream-level actions (Create/Put/Delete),
+    # and WITHOUT ":*" for the tag actions (Tag/Untag/ListTagsForResource),
+    # which target the log group resource ARN itself.
+    resources = [
+      "arn:aws:logs:us-east-1:${local.account_id}:log-group:/aws/lambda/lesson-03-*",
+      "arn:aws:logs:us-east-1:${local.account_id}:log-group:/aws/lambda/lesson-03-*:*",
+    ]
   }
 
   # --- API Gateway (HTTP API + integration + route + stage) ---
@@ -163,13 +169,25 @@ data "aws_iam_policy_document" "github_deploy" {
     ]
   }
 
+  # --- Read the shared OIDC provider (github-deploy.tf's own data source) ---
+  # The role manages a config that references the OIDC provider, so it must be
+  # able to read it. Get can be scoped to the provider ARN...
+  statement {
+    sid       = "ReadOIDCProvider"
+    actions   = ["iam:GetOpenIDConnectProvider"]
+    resources = ["arn:aws:iam::${local.account_id}:oidc-provider/token.actions.githubusercontent.com"]
+  }
+
   # --- Read-only actions that AWS only accepts on "*" ---
   # These don't expose anything sensitive; they let `plan` see current state.
+  # (ListOpenIDConnectProviders can't be scoped — the data source lists all,
+  #  then filters by URL.)
   statement {
     sid = "DescribeOnAny"
     actions = [
       "logs:DescribeLogGroups",
       "lambda:GetAccountSettings",
+      "iam:ListOpenIDConnectProviders",
     ]
     resources = ["*"]
   }
